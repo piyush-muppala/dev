@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Frontend</title>
+    <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 20px;
+            background-color: #f8f9fa;
+            color: #495057;
+            display: flex;
+            justify-content: space-around;
+        }
+
+        .card {
+            background-color: #ffffff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+            margin-bottom: 30px;
+            max-width: 400px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        h1 {
+            margin-bottom: 20px;
+            color: #007bff;
+        }
+
+        form {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #6c757d;
+        }
+
+        input,
+        textarea {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 20px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            background-color: #e9ecef;
+            color: #495057;
+            box-sizing: border-box;
+        }
+
+        button {
+            padding: 14px;
+            background-color: #3c943a;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            width: 100%;
+        }
+
+        button:hover {
+            background-color: #218838;
+        }
+
+        ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        li {
+            margin-bottom: 20px;
+            padding: 20px;
+            border: 1px solid #ced4da;
+            background-color: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Style for delete buttons in update/delete forms */
+        .delete-button {
+            background-color: #dc3545;
+        }
+
+        .delete-button:hover {
+            background-color: #c82333;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="card">
+        <h1>Locations</h1>
+        <ul id="locations-list"></ul>
+        <form id="add-location-form">
+            <label for="location-name">Name:</label>
+            <input type="text" id="location-name" placeholder="Enter location name" required>
+            <label for="location-description">Description:</label>
+            <textarea id="location-description" placeholder="Enter location description" required></textarea>
+            <button type="submit">Add Location</button>
+        </form>
+        <form id="update-delete-location-form">
+            <label for="update-delete-location-id">Location ID:</label>
+            <input type="text" id="update-delete-location-id" placeholder="Enter location ID" required>
+            <button class="delete-button" type="button" onclick="deleteLocation()">Delete Location</button>
+            <button class="update-button" type="button" onclick="updateLocation()">Update Location</button>
+        </form>
+        <button id="fetch-locations-button">Fetch All Locations</button>
+    </div>
+    
+    <div class="card">
+        <h1>Materials</h1>
+        <ul id="materials-list"></ul>
+        <form id="add-material-form">
+            <label for="material-name">Name:</label>
+            <input type="text" id="material-name" placeholder="Enter material name" required>
+            <label for="material-type">Type:</label>
+            <input type="text" id="material-type" placeholder="Enter material type" required>
+            <button type="submit">Add Material</button>
+        </form>
+        <form id="update-delete-material-form">
+            <label for="update-delete-material-id">Material ID:</label>
+            <input type="text" id="update-delete-material-id" placeholder="Enter material ID" required>
+            <button class="delete-button" type="button" onclick="deleteMaterial()">Delete Material</button>
+            <button class="update-button" type="button" onclick="updateMaterial()">Update Material</button>
+        </form>        
+        <button id="fetch-materials-button">Fetch All Materials</button>
+    </div>
+    
+    <div class="card">
+        <h1>Sales</h1>
+        <ul id="sales-list"></ul>
+        <form id="add-sale-form">
+            <label for="sale-location-id">Location ID:</label>
+            <input type="text" id="sale-location-id" placeholder="Enter location ID" required>
+            <label for="sale-material-id">Material ID:</label>
+            <input type="text" id="sale-material-id" placeholder="Enter material ID" required>
+            <label for="sale-quantity">Quantity:</label>
+            <input type="text" id="sale-quantity" placeholder="Enter quantity" required>
+            <button type="submit">Add Sale</button>
+        </form>
+        <form id="update-delete-sale-form">
+            <label for="update-delete-sale-id">Sale ID:</label>
+            <input type="text" id="update-delete-sale-id" placeholder="Enter sale ID" required>
+            <button class="delete-button" type="button" onclick="deleteSale()">Delete Sale</button>
+            <button class="update-button" type="button" onclick="updateSale()">Update Sale</button>
+        </form>
+        <button id="fetch-sales-button">Fetch All Sales</button>
+    </div>
+
+    <script>
+        // Fetch and display locations, materials, and sales on page load
+        $(document).ready(function() {
+            fetchLocations();
+            fetchMaterials();
+            fetchSales();
+        });
+
+
+        // Update Location
+function updateLocation() {
+    var locationId = $("#update-delete-location-id").val();
+    var newName = prompt("Enter the new name for the location:");
+    var newDescription = prompt("Enter the new description for the location:");
+
+    if (newName !== null && newDescription !== null) {
+        $.ajax({
+            type: "PUT",
+            url: `http://0.0.0.0:8000/locations/${locationId}`,
+            contentType: "application/json",
+            data: JSON.stringify({ name: newName, description: newDescription }),
+            success: function(data) {
+                alert(data.status);
+                // Refresh the locations list after updating a location
+                fetchLocations();
+            },
+            dataType: "json"
+        });
+    }
+}
+
+// Update Material
+function updateMaterial() {
+    var materialId = $("#update-delete-material-id").val();
+    var newName = prompt("Enter the new name for the material:");
+    var newType = prompt("Enter the new type for the material:");
+
+    if (newName !== null && newType !== null) {
+        $.ajax({
+            type: "PUT",
+            url: `http://0.0.0.0:8000/materials/${materialId}`,
+            contentType: "application/json",
+            data: JSON.stringify({ name: newName, type: newType }),
+            success: function(data) {
+                alert(data.status);
+                // Refresh the materials list after updating a material
+                fetchMaterials();
+            },
+            dataType: "json"
+        });
+    }
+}
+
+// Update Sale
+function updateSale() {
+    var saleId = $("#update-delete-sale-id").val();
+    var newLocationId = prompt("Enter the new location ID for the sale:");
+    var newMaterialId = prompt("Enter the new material ID for the sale:");
+    var newQuantity = prompt("Enter the new quantity for the sale:");
+
+    if (newLocationId !== null && newMaterialId !== null && newQuantity !== null) {
+        $.ajax({
+            type: "PUT",
+            url: `http://0.0.0.0:8000/sales/${saleId}`,
+            contentType: "application/json",
+            data: JSON.stringify({ location_id: newLocationId, material_id: newMaterialId, quantity: newQuantity }),
+            success: function(data) {
+                alert(data.status);
+                // Refresh the sales list after updating a sale
+                fetchSales();
+            },
+            dataType: "json"
+        });
+    }
+}
+    
+        // Function to fetch and display all data for a specific section
+        function fetchAllData(section) {
+    $.get(`http://0.0.0.0:8000/${section}`, function (data) {
+        $(`#${section}-list`).empty();
+
+        if (Array.isArray(data) && data.length > 0) {
+            // Create a table header
+            const tableHeader = Object.keys(data[0]).map(fieldName => `<th>${fieldName}</th>`).join('');
+            const tableHeaderHTML = `<tr>${tableHeader}</tr>`;
+            
+            // Create rows for each item
+            const tableRowsHTML = data.map(item => {
+                const tableData = Object.values(item).map(value => `<td>${value}</td>`).join('');
+                return `<tr>${tableData}</tr>`;
+            }).join('');
+
+            // Create a table with header and rows
+            const tableHTML = `<table border="1">${tableHeaderHTML}${tableRowsHTML}</table>`;
+
+            // Append the table to the list
+            $(`#${section}-list`).append(tableHTML);
+        } else {
+            console.error(`Invalid data format for ${section}:`, data);
+        }
+    });
+}
+
+
+
+    
+        // Add location form submission
+        $("#add-location-form").submit(function(event) {
+            event.preventDefault();
+            var name = $("#location-name").val();
+            var description = $("#location-description").val();
+    
+            $.ajax({
+                type: "POST",
+                url: "http://0.0.0.0:8000/locations",
+                contentType: "application/json",
+                data: JSON.stringify({ name: name, description: description }),
+                success: function(data) {
+                    alert(data.message);
+                    // Clear the input fields after adding a new location
+                    $("#location-name").val('');
+                    $("#location-description").val('');
+                    // You can also choose not to refresh the locations list here
+                },
+                dataType: "json"
+            });
+        });
+    
+        // Function to fetch and display materials
+        function fetchMaterials() {
+            $.get("http://0.0.0.0:8000/materials", function(data) {
+                $("#materials-list").empty();
+                if (Array.isArray(data)) {
+                    // You can choose not to append the data here
+                } else {
+                    console.error("Invalid data format for materials:", data);
+                }
+            });
+        }
+    
+        // Add material form submission
+        $("#add-material-form").submit(function(event) {
+            event.preventDefault();
+            var name = $("#material-name").val();
+            var type = $("#material-type").val();
+    
+            $.ajax({
+                type: "POST",
+                url: "http://0.0.0.0:8000/materials",
+                contentType: "application/json",
+                data: JSON.stringify({ name: name, type: type }),
+                success: function(data) {
+                    alert(data.message);
+                    // Clear the input fields after adding a new material
+                    $("#material-name").val('');
+                    $("#material-type").val('');
+                    // You can also choose not to refresh the materials list here
+                },
+                dataType: "json"
+            });
+        });
+    
+        // Function to fetch and display sales
+        function fetchSales() {
+            $.get("http://0.0.0.0:8000/sales", function(data) {
+                $("#sales-list").empty();
+                if (Array.isArray(data)) {
+                    // You can choose not to append the data here
+                } else {
+                    console.error("Invalid data format for sales:", data);
+                }
+            });
+        }
+    
+        // Add sale form submission
+        $("#add-sale-form").submit(function(event) {
+            event.preventDefault();
+            var location_id = $("#sale-location-id").val();
+            var material_id = $("#sale-material-id").val();
+            var quantity = $("#sale-quantity").val();
+    
+            $.ajax({
+                type: "POST",
+                url: "http://0.0.0.0:8000/sales",
+                contentType: "application/json",
+                data: JSON.stringify({ location_id: location_id, material_id: material_id, quantity: quantity }),
+                success: function(data) {
+                    alert(data.message);
+                    // Clear the input fields after adding a new sale
+                    $("#sale-location-id").val('');
+                    $("#sale-material-id").val('');
+                    $("#sale-quantity").val('');
+                    // You can also choose not to refresh the sales list here
+                },
+                dataType: "json"
+            });
+        });
+    
+        // Update/Delete Location
+        function deleteLocation() {
+            var locationId = $("#update-delete-location-id").val();
+            $.ajax({
+                type: "DELETE",
+                url: `http://0.0.0.0:8000/locations/${locationId}`,
+                success: function(data) {
+                    alert(data.status);
+                    // Refresh the locations list after deleting a location
+                    fetchLocations();
+                },
+                dataType: "json"
+            });
+        }
+    
+        // Update/Delete Material
+        function deleteMaterial() {
+            var materialId = $("#update-delete-material-id").val();
+            $.ajax({
+                type: "DELETE",
+                url: `http://0.0.0.0:8000/materials/${materialId}`,
+                success: function(data) {
+                    alert(data.status);
+                    // Refresh the materials list after deleting a material
+                    fetchMaterials();
+                },
+                dataType: "json"
+            });
+        }
+    
+        // Update/Delete Sale
+        function deleteSale() {
+            var saleId = $("#update-delete-sale-id").val();
+            $.ajax({
+                type: "DELETE",
+                url: `http://0.0.0.0:8000/sales/${saleId}`,
+                success: function(data) {
+                    alert(data.status);
+                    // Refresh the sales list after deleting a sale
+                    fetchSales();
+                },
+                dataType: "json"
+            });
+
+            
+        }
+
+        $("#fetch-locations-button").click(function () {
+            fetchAllData('locations');
+        });
+
+        $("#fetch-materials-button").click(function () {
+            fetchAllData('materials');
+        });
+
+        $("#fetch-sales-button").click(function () {
+            fetchAllData('sales');
+        });
+    </script>
+</body>
+</html>
